@@ -13,11 +13,11 @@ Antes de começar, você precisa ter instalado em sua máquina:
 ##  Clonando o repositório
 
 ```bash
-git clone https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
-cd SEU_REPOSITORIO
+git clone https://github.com/DominiAcco/meal_catalogue
+cd meal_catalogue
 ```
 
-Substitua `SEU_USUARIO` e `SEU_REPOSITORIO` pelo seu usuário e nome do repositório no GitHub.
+
 
 ##  Instalação das dependências
 
@@ -37,7 +37,7 @@ Isso instalará:
 * react-router-dom e @types/react-router-dom
 
 
-## 🧩 Estrutura do projeto
+## Estrutura do projeto
 
 ```
 src/
