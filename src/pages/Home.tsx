@@ -1,94 +1,61 @@
-// src/pages/Home.tsx
 import React, { useEffect, useState } from 'react';
 import api from '../services/Api';
 import { useNavigate } from 'react-router-dom';
-import {
-  Container,
-  Card,
-  PokemonImage,
-  SearchBarWrapper,
-  SearchInput,
-  Title,
-} from './Home.styles';
 
-interface Pokemon {
-  name: string;
-  image: string;
-}
+import { Header } from '../components/Header';
+import { PokemonCard ,type Pokemon } from '../components/PokemonCard';
+import { Container } from '../components/PokemonCard/styles';
 
-const Home: React.FC = () => {
-  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
+export const Home: React.FC = () => {
+  const [allPokemons, setAllPokemons] = useState<Pokemon[]>([]);
+  const [visiblePokemons, setVisiblePokemons] = useState<Pokemon[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredPokemon, setFilteredPokemon] = useState<Pokemon | null>(null);
   const navigate = useNavigate();
 
+  
   useEffect(() => {
-    const fetchPokemons = async () => {
-      try {
-        const res = await api.get('pokemon?limit=100');
-        const details = await Promise.all(
-          res.data.results.map(async (p: { name: string }) => {
-            const detail = await api.get(`pokemon/${p.name}`);
-            return {
-              name: p.name,
-              image: detail.data.sprites.front_default,
-            };
-          })
-        );
-        setPokemons(details);
-      } catch (error) {
-        console.error('Erro ao buscar os pokémons:', error);
-      }
-    };
-
-    fetchPokemons();
+    (async () => {
+      const res = await api.get('pokemon?limit=100');
+      const details = await Promise.all(
+        res.data.results.map(async (p: { name: string }) => {
+          const d = await api.get(`pokemon/${p.name}`);
+          return { name: p.name, image: d.data.sprites.front_default };
+        })
+      );
+      setAllPokemons(details);
+      setVisiblePokemons(details);
+    })();
   }, []);
 
-  const handleSearch = async (term: string) => {
-    setSearchTerm(term);
-    if (!term) {
-      setFilteredPokemon(null);
-      return;
-    }
+  // reset quando apaga
+  useEffect(() => {
+    if (!searchTerm.trim()) setVisiblePokemons(allPokemons);
+  }, [searchTerm, allPokemons]);
 
-    try {
-      const res = await api.get(`pokemon/${term.toLowerCase()}`);
-      const result: Pokemon = {
-        name: res.data.name,
-        image: res.data.sprites.front_default,
-      };
-      setFilteredPokemon(result);
-    } catch (error) {
-      setFilteredPokemon(null); // Não encontrado
-    }
+  const handleSearch = () => {
+    if (!searchTerm.trim()) return;
+    setVisiblePokemons(
+      allPokemons.filter(p =>
+        p.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+      )
+    );
   };
 
   return (
     <>
-      <SearchBarWrapper>
-        <Title>Pokédex</Title>
-        <SearchInput
-          type="text"
-          placeholder="Buscar pokémon..."
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-      </SearchBarWrapper>
-
+      <Header
+        searchTerm={searchTerm}
+        onChange={setSearchTerm}
+        onSearch={handleSearch}
+      />
       <Container>
-        {filteredPokemon ? (
-          <Card onClick={() => navigate(`/pokemon/${filteredPokemon.name}`)}>
-            <h3>{filteredPokemon.name}</h3>
-            <PokemonImage src={filteredPokemon.image} alt={filteredPokemon.name} />
-          </Card>
-        ) : (
-          pokemons.map((pokemon) => (
-            <Card key={pokemon.name} onClick={() => navigate(`/pokemon/${pokemon.name}`)}>
-              <h3>{pokemon.name}</h3>
-              <PokemonImage src={pokemon.image} alt={pokemon.name} />
-            </Card>
-          ))
-        )}
+        {visiblePokemons.map(p => (
+          <PokemonCard
+            key={p.name}
+            pokemon={p}
+            onClick={name => navigate(`/pokemon/${name}`)}
+          />
+        ))}
       </Container>
     </>
   );
